@@ -1,5 +1,4 @@
-﻿
-namespace TechTestBackend;
+﻿namespace TechTestBackend.Models;
 
 public class Soptifysong
 {

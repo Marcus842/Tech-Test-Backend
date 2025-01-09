@@ -4,6 +4,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using MessagePack.Internal;
+using TechTestBackend.Models;
+using TechTestBackend.Helpers;
+using TechTestBackend.Services;
 
 namespace TechTestBackend.Controllers;
 
@@ -11,10 +14,15 @@ namespace TechTestBackend.Controllers;
 [Route("api/spotify")]
 public class SpotifyController : ControllerBase
 {
-    //constructors are obsolete should not be used anymore
-    // public SpotifyController()
-    // {
-    // }
+    private readonly ILogger<SpotifyController> _logger;
+    private readonly ISpotifyHttpService _spotifyService;
+
+    public SpotifyController(ILogger<SpotifyController> logger,ISpotifyHttpService spotifyService)
+    {
+        _logger = logger;
+        _spotifyService = spotifyService;
+        SpotifyHelper.SpotifyService= _spotifyService;
+    }
 
     [HttpGet]
     [Route("searchTracks")]
@@ -22,13 +30,14 @@ public class SpotifyController : ControllerBase
     {
         try
         {        
-            // TODO: Implement this method
             object trak = SpotifyHelper.GetTracks(name);
 
+            _logger.LogDebug($"Successfully got trak: {trak}");
             return Ok(trak);
         }
         catch (Exception e)
         {
+            _logger.LogError(e, $"Error searching tracks");
             // this is the best practice for not leaking error details
             return NotFound();
         }
@@ -43,6 +52,7 @@ public class SpotifyController : ControllerBase
         var track = SpotifyHelper.GetTrack(id); //check if trak exists
         if(track.Id == null || SpotifyId(id) == false)
         {
+            _logger.LogWarning("Trak does not exist");
             return StatusCode(400);
         }
 
@@ -57,9 +67,12 @@ public class SpotifyController : ControllerBase
             ((SongstorageContext)storage).Songs.Add(song);
             
             ((SongstorageContext)storage).SaveChanges();
+            _logger.LogDebug($"Successfully added song to storage: {song}");
         }
         catch (Exception e)
         {
+            _logger.LogError(e, $"Error adding song: {song} to storage");
+
             // not sure if this is the best way to handle this
             return Ok();
         }
@@ -76,8 +89,9 @@ public class SpotifyController : ControllerBase
         var track = SpotifyHelper.GetTrack(id);
         if(track.Id == null || SpotifyId(id) == false)
         {
+            _logger.LogWarning("Trak does not exist");
             return StatusCode(400); // bad request wrong id not existing in spotify
-        }
+        }  
 
         var song = new Soptifysong();
         song.Id = id;
@@ -86,10 +100,11 @@ public class SpotifyController : ControllerBase
         {
             ((SongstorageContext)storage).Songs.Remove(song); // this is not working every tume
             ((SongstorageContext)storage).SaveChanges();
+            _logger.LogDebug($"Successfully removed song from storage: {song}");
         }
         catch (Exception e)
         {
-            // we should probably log this
+            _logger.LogError(e, $"Error removing song: {song} from storage");
             return Ok();
         }
         
@@ -149,6 +164,8 @@ public class SpotifyController : ControllerBase
                         }
                         catch (Exception e)
                         {
+                            _logger.LogError(e, $"Error processing list liked");
+
                             // something went wrong, but it's not important
                             songs.Add(((SongstorageContext)storage).Songs.ToList()[i]);
                         }
