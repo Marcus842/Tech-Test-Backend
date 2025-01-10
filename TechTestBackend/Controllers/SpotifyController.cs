@@ -47,7 +47,7 @@ public class SpotifyController : ControllerBase
     [Route("like")]
     public IActionResult Like(string id)
     {
-        object storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext));
+        var storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext)) as SongstorageContext;
         
         var track = SpotifyHelper.GetTrack(id); //check if trak exists
         if(track.Id == null || SpotifyId(id) == false)
@@ -62,12 +62,18 @@ public class SpotifyController : ControllerBase
 
         try
         {
-            //crashes sometimes for some reason
-            // we   have to look into this
-            ((SongstorageContext)storage).Songs.Add(song);
-            
-            ((SongstorageContext)storage).SaveChanges();
-            _logger.LogDebug($"Successfully added song to storage: {song}");
+            if (!SongExists(id, storage))
+            {
+                storage.Songs.Add(song);
+
+                storage.SaveChanges();
+                _logger.LogDebug($"Successfully added song to storage: {song}");
+            }
+            else
+            {
+                _logger.LogDebug($"Successfully already added song to storage: {song}");
+            }
+
         }
         catch (Exception e)
         {
@@ -84,7 +90,9 @@ public class SpotifyController : ControllerBase
     [Route("removeLike")]
     public IActionResult RemoveLike(string id)
     {
-        object storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext));
+        try
+        {
+            var storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext)) as SongstorageContext;
         
         var track = SpotifyHelper.GetTrack(id);
         if(track.Id == null || SpotifyId(id) == false)
@@ -92,19 +100,25 @@ public class SpotifyController : ControllerBase
             _logger.LogWarning("Trak does not exist");
             return StatusCode(400); // bad request wrong id not existing in spotify
         }  
-
-        var song = new Soptifysong();
-        song.Id = id;
         
-        try
-        {
-            ((SongstorageContext)storage).Songs.Remove(song); // this is not working every tume
-            ((SongstorageContext)storage).SaveChanges();
-            _logger.LogDebug($"Successfully removed song from storage: {song}");
+
+            if(SongExists(id, storage))
+            {
+                var song= storage.Songs.First(e => e.Id == id);
+
+                storage.Songs.Remove(song);
+                storage.SaveChanges();
+                _logger.LogDebug($"Successfully removed song from storage: {song}");
+            }
+            else
+            {
+                _logger.LogWarning($"Song with id: {id} does not exist in storage");
+            }
+
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"Error removing song: {song} from storage");
+            _logger.LogError(e, $"Error removing song with id: {id} from storage");
             return Ok();
         }
         
@@ -115,76 +129,40 @@ public class SpotifyController : ControllerBase
     [Route("listLiked")]
     public IActionResult ListLiked()
     {
-        object storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext));
+        var storage = HttpContext.RequestServices.GetService(typeof(SongstorageContext)) as SongstorageContext;
 
-        int songsnumber = ((SongstorageContext)storage).Songs.Count();
-        List<Soptifysong> songs = new List<Soptifysong>(); //((SongstorageContext)storage).Songs.ToList();
+        int songsnumber = storage.Songs.Count();
+        List<Soptifysong> songs = new List<Soptifysong>();
 
         if (songsnumber > 0)
         {
             for (int i = 0; i <= songsnumber - 1; i++)
             {
-                string songid = ((SongstorageContext)HttpContext.RequestServices.GetService(typeof(SongstorageContext))).Songs.ToList()[i].Id;
+                var song = storage.Songs.ToList()[i];
+                string songid = song.Id;
             
                 var track = SpotifyHelper.GetTrack(songid);
                 if(track.Id == null)
                 {
-                    // TODO: remove song from database, but not sure how
-                }
-                else
-                {
-                    // not working for some reason so we have to do the check manually for now
-                    // if(SongExists(track.Id) == false)
-                    
-                    int numerofsong = songs.Count();
-                    for (int num = 0; num <= numerofsong; num++)
+                    if (SongExists(songid, storage))
                     {
-                        try
-                        {
-                            if(songs[num].Id == songid)
-                            {
-                                break;
-                            }
-                            else if(num == numerofsong - 1)
-                            {
-
-                                for (int namenum = 0; namenum < numerofsong; namenum++)
-                                {
-                                    if(songs[namenum].Name == track.Name)
-                                    {
-                                        break; // we dont want to add the same song twice
-                                        //does this break work?
-                                    }
-                                    else if(namenum == numerofsong - 1)
-                                    {
-                                        songs.Add(((SongstorageContext)storage).Songs.ToList()[i]);
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError(e, $"Error processing list liked");
-
-                            // something went wrong, but it's not important
-                            songs.Add(((SongstorageContext)storage).Songs.ToList()[i]);
-                        }
+                        storage.Songs.Remove(song);
+                        storage.SaveChanges();
+                        _logger.LogDebug($"Successfully removed song from storage: {song}");
                     }
                 }
             }
         }
-
-        //save the changes, just in case
-        ((SongstorageContext)storage).SaveChanges();
+        songs = storage.Songs.ToList();
         
         return Ok(songs);
     }
     
-    private bool SongExists(string id)
+    private bool SongExists(string id, SongstorageContext storage)
     {
-        return ((SongstorageContext)HttpContext.RequestServices.GetService(typeof(SongstorageContext))).Songs.First(e => e.Id == id) != null;
+        return storage.Songs.Any() && storage.Songs.FirstOrDefault(e => e.Id == id) != null;
     }
-    
+
     private static bool SpotifyId(object id)
     {
         return id.ToString().Length == 22;

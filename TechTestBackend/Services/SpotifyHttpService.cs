@@ -39,6 +39,7 @@ namespace TechTestBackend.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     HandleErrorResponse(response);
+                    return;
                 }
                 var content = response.Content.ReadAsStringAsync().Result;
                 token = JsonConvert.DeserializeObject<TokenModel>(content);
@@ -56,7 +57,11 @@ namespace TechTestBackend.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                HandleErrorResponse(response);
+                var errorStatus = HandleErrorResponse(response);
+                if (errorStatus == 404)
+                {
+                    return Array.Empty<Soptifysong>();
+                }
             }
             var content = response.Content.ReadAsStringAsync().Result;
             dynamic objects = JsonConvert.DeserializeObject(content);
@@ -75,7 +80,11 @@ namespace TechTestBackend.Services
             var response = _httpClient.GetAsync(request_uri).Result;
             if (!response.IsSuccessStatusCode)
             {
-                HandleErrorResponse(response);
+                var errorStatus=HandleErrorResponse(response);
+                if(errorStatus==404)
+                {
+                    return new Soptifysong();
+                }
             }
             dynamic objects = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
 
@@ -84,7 +93,7 @@ namespace TechTestBackend.Services
             return song;
         }
 
-        private void HandleErrorResponse(HttpResponseMessage response)
+        private int HandleErrorResponse(HttpResponseMessage response)
         {
             var error = new ErrorResponseModel();
             try
@@ -109,6 +118,10 @@ namespace TechTestBackend.Services
             }
             var errorMessage = $"Unsuccessful call to spotify API. Error code: {error.StatusCode} Error: {error.Error}";
             _logger.LogError(errorMessage);
+            if (error?.StatusCode == 404)
+            {
+                return error.StatusCode;
+            }
             throw new Exception(errorMessage);
         }
     }
