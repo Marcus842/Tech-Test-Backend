@@ -39,3 +39,6 @@ Expect this test to take around 2-4 hours to finish.
 Please provide a link to your repository when you are done with the test. When finishing up, please provide a short list of further improvements for continued development (if any).
 
 If your repository includes changes to the application configuration, provide clear instructions at the end of this README.md file on how to run the application.
+
+## Changes to application configuration
+Moved Client Id, Client Secret to settings and User Secret to not store it directly in the repository

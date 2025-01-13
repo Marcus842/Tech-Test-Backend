@@ -12,20 +12,21 @@ namespace TechTestBackend.Services
         private readonly HttpClient _httpClient;
         private readonly SpotifyConfiguration _configuration;
         private readonly ILogger<SpotifyHttpService> _logger;
-        private TokenModel token;
-        private string base_url;
+        private TokenModel _token;
+        private string _base_url;
 
-        public SpotifyHttpService(IOptions<SpotifyConfiguration> options, ILogger<SpotifyHttpService> logger) {
+        public SpotifyHttpService(IOptions<SpotifyConfiguration> options, ILogger<SpotifyHttpService> logger)
+        {
             _httpClient = new HttpClient();
             _configuration = options.Value;
             _logger = logger;
 
-            base_url = _configuration.BaseUrl;
+            _base_url = _configuration.BaseUrl;
         }
 
         private void GetAuthorizationHeader()
         {
-            if(token == null || !token.IsValid)
+            if (_token == null || !_token.IsValid)
             {
                 var client_id = _configuration.CliendID;
                 var client_secret = _configuration.CliendSecret;
@@ -42,9 +43,9 @@ namespace TechTestBackend.Services
                     return;
                 }
                 var content = response.Content.ReadAsStringAsync().Result;
-                token = JsonConvert.DeserializeObject<TokenModel>(content);
+                _token = JsonConvert.DeserializeObject<TokenModel>(content);
 
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken.ToString());
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken.ToString());
             }
         }
 
@@ -52,13 +53,13 @@ namespace TechTestBackend.Services
         {
             GetAuthorizationHeader();
 
-            var request_uri = base_url + "search?q=" + name + "&type=track";
+            var request_uri = _base_url + "search?q=" + name + "&type=track";
             var response = _httpClient.GetAsync(request_uri).Result;
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorStatus = HandleErrorResponse(response);
-                if (errorStatus == 404)
+                var error_status = HandleErrorResponse(response);
+                if (error_status == 404)
                 {
                     return Array.Empty<Soptifysong>();
                 }
@@ -76,12 +77,12 @@ namespace TechTestBackend.Services
         {
             GetAuthorizationHeader();
 
-            var request_uri = base_url + "tracks/" + id + "/";
+            var request_uri = _base_url + "tracks/" + id + "/";
             var response = _httpClient.GetAsync(request_uri).Result;
             if (!response.IsSuccessStatusCode)
             {
-                var errorStatus=HandleErrorResponse(response);
-                if(errorStatus==404)
+                var error_status = HandleErrorResponse(response);
+                if (error_status == 404)
                 {
                     return new Soptifysong();
                 }
@@ -116,13 +117,13 @@ namespace TechTestBackend.Services
                     error = new ErrorResponseModel() { StatusCode = (int)response.StatusCode };
                 }
             }
-            var errorMessage = $"Unsuccessful call to spotify API. Error code: {error.StatusCode} Error: {error.Error}";
-            _logger.LogError(errorMessage);
+            var error_message = $"Unsuccessful call to spotify API. Error code: {error.StatusCode} Error: {error.Error}";
+            _logger.LogError(error_message);
             if (error?.StatusCode == 404)
             {
                 return error.StatusCode;
             }
-            throw new Exception(errorMessage);
+            throw new Exception(error_message);
         }
     }
 }
