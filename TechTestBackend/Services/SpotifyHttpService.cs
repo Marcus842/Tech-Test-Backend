@@ -49,7 +49,7 @@ namespace TechTestBackend.Services
             }
         }
 
-        public Soptifysong[] GetTracks(string name)
+        public Spotifysong[] GetTracks(string name)
         {
             GetAuthorizationHeader();
 
@@ -61,19 +61,19 @@ namespace TechTestBackend.Services
                 var error_status = HandleErrorResponse(response);
                 if (error_status == 404)
                 {
-                    return Array.Empty<Soptifysong>();
+                    return Array.Empty<Spotifysong>();
                 }
             }
             var content = response.Content.ReadAsStringAsync().Result;
             dynamic objects = JsonConvert.DeserializeObject(content);
 
             var spotify_song_items = objects.tracks.items.ToString();
-            var songs = JsonConvert.DeserializeObject<Soptifysong[]>(spotify_song_items);
+            var songs = JsonConvert.DeserializeObject<Spotifysong[]>(spotify_song_items);
 
             return songs;
         }
 
-        public Soptifysong GetTrack(string id)
+        public Spotifysong GetTrack(string id)
         {
             GetAuthorizationHeader();
 
@@ -84,12 +84,12 @@ namespace TechTestBackend.Services
                 var error_status = HandleErrorResponse(response);
                 if (error_status == 404)
                 {
-                    return new Soptifysong();
+                    return new Spotifysong();
                 }
             }
             dynamic objects = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
 
-            var song = JsonConvert.DeserializeObject<Soptifysong>(objects.ToString());
+            var song = JsonConvert.DeserializeObject<Spotifysong>(objects.ToString());
 
             return song;
         }

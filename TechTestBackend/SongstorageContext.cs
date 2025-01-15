@@ -10,5 +10,5 @@ public class SongstorageContext : DbContext
     {
     }
 
-    public DbSet<Soptifysong> Songs { get; set; }
+    public DbSet<Spotifysong> Songs { get; set; }
 }

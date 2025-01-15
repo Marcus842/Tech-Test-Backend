@@ -7,13 +7,13 @@ public static class SpotifyHelper
 {
     public static ISpotifyHttpService SpotifyService { get; internal set; }
 
-    public static Soptifysong[] GetTracks(string name)
+    public static Spotifysong[] GetTracks(string name)
     {
         var songs= SpotifyService.GetTracks(name);
         return songs;
     }
 
-    public static Soptifysong GetTrack(string id)
+    public static Spotifysong GetTrack(string id)
     {
         var song = SpotifyService.GetTrack(id);
 

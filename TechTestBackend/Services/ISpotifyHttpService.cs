@@ -4,7 +4,7 @@ namespace TechTestBackend.Services
 {
     public interface ISpotifyHttpService
     {
-        Soptifysong[] GetTracks(string name);
-        Soptifysong GetTrack(string id);
+        Spotifysong[] GetTracks(string name);
+        Spotifysong GetTrack(string id);
     }
 }
