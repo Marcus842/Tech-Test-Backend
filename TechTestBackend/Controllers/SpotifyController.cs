@@ -10,14 +10,14 @@ namespace TechTestBackend.Controllers;
 public class SpotifyController : ControllerBase
 {
     private readonly ILogger<SpotifyController> _logger;
-    private readonly ISpotifyHttpService _spotifyService;
+    private readonly ISpotifyHttpService _spotify_service;
     private readonly SongstorageContext _storage;
 
-    public SpotifyController(ILogger<SpotifyController> logger, ISpotifyHttpService spotifyService, SongstorageContext storage)
+    public SpotifyController(ILogger<SpotifyController> logger, ISpotifyHttpService spotify_service, SongstorageContext storage)
     {
         _logger = logger;
-        _spotifyService = spotifyService;
-        SpotifyHelper.SpotifyService = _spotifyService;
+        _spotify_service = spotify_service;
+        SpotifyHelper.SpotifyService = _spotify_service;
         _storage = storage;
     }
 
@@ -27,10 +27,10 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            object trak = SpotifyHelper.GetTracks(name);
+            object track = SpotifyHelper.GetTracks(name);
 
-            _logger.LogDebug($"Successfully got trak: {trak}");
-            return Ok(trak);
+            _logger.LogDebug($"Successfully got track: {track}");
+            return Ok(track);
         }
         catch (Exception e)
         {
@@ -46,14 +46,14 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            var track = SpotifyHelper.GetTrack(id); //check if trak exists
+            var track = SpotifyHelper.GetTrack(id); //check if track exists
             if (track.Id == null || SpotifyId(id) == false)
             {
-                _logger.LogWarning("Trak does not exist");
+                _logger.LogWarning("Track does not exist");
                 return StatusCode(400);
             }
 
-            var song = new Spotifysong(); //create new song
+            var song = new Spotifysong();
             song.Id = id;
             song.Name = track.Name;
 
@@ -91,7 +91,7 @@ public class SpotifyController : ControllerBase
             var track = SpotifyHelper.GetTrack(id);
             if (track.Id == null || SpotifyId(id) == false)
             {
-                _logger.LogWarning("Trak does not exist");
+                _logger.LogWarning("Track does not exist");
                 return StatusCode(400); // bad request wrong id not existing in spotify
             }
 

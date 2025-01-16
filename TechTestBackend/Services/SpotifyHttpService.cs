@@ -9,7 +9,7 @@ namespace TechTestBackend.Services
 {
     public class SpotifyHttpService : ISpotifyHttpService
     {
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _http_client;
         private readonly SpotifyConfiguration _configuration;
         private readonly ILogger<SpotifyHttpService> _logger;
         private TokenModel _token;
@@ -17,7 +17,7 @@ namespace TechTestBackend.Services
 
         public SpotifyHttpService(IOptions<SpotifyConfiguration> options, ILogger<SpotifyHttpService> logger)
         {
-            _httpClient = new HttpClient();
+            _http_client = new HttpClient();
             _configuration = options.Value;
             _logger = logger;
 
@@ -32,11 +32,11 @@ namespace TechTestBackend.Services
                 var client_secret = _configuration.CliendSecret;
                 var encoding = Encoding.ASCII.GetBytes($"{client_id}:{client_secret}");
                 var base64 = Convert.ToBase64String(encoding);
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64);
+                _http_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64);
 
                 var name_value_collection = new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") };
                 var form_url_encoded_content = new FormUrlEncodedContent(name_value_collection);
-                var response = _httpClient.PostAsync("https://accounts.spotify.com/api/token", form_url_encoded_content).Result;
+                var response = _http_client.PostAsync("https://accounts.spotify.com/api/token", form_url_encoded_content).Result;
                 if (!response.IsSuccessStatusCode)
                 {
                     HandleErrorResponse(response);
@@ -45,7 +45,7 @@ namespace TechTestBackend.Services
                 var content = response.Content.ReadAsStringAsync().Result;
                 _token = JsonConvert.DeserializeObject<TokenModel>(content);
 
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken.ToString());
+                _http_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken.ToString());
             }
         }
 
@@ -53,8 +53,8 @@ namespace TechTestBackend.Services
         {
             GetAuthorizationHeader();
 
-            var request_uri = _base_url + "search?q=" + name + "&type=track";
-            var response = _httpClient.GetAsync(request_uri).Result;
+            var request_url = _base_url + "search?q=" + name + "&type=track";
+            var response = _http_client.GetAsync(request_url).Result;
 
             if (!response.IsSuccessStatusCode)
             {
@@ -77,8 +77,8 @@ namespace TechTestBackend.Services
         {
             GetAuthorizationHeader();
 
-            var request_uri = _base_url + "tracks/" + id + "/";
-            var response = _httpClient.GetAsync(request_uri).Result;
+            var request_url = _base_url + "tracks/" + id + "/";
+            var response = _http_client.GetAsync(request_url).Result;
             if (!response.IsSuccessStatusCode)
             {
                 var error_status = HandleErrorResponse(response);
