@@ -17,7 +17,7 @@ builder.Services.AddDbContextFactory<SongstorageContext>(options => options.UseI
 builder.Services.Configure<SpotifyConfiguration>(
     builder.Configuration.GetSection("Spotify"));
 
-builder.Services.AddScoped<ISpotifyHttpService, SpotifyHttpService>();
+builder.Services.AddHttpClient<ISpotifyHttpService, SpotifyHttpService>();
 
 var app = builder.Build();
 

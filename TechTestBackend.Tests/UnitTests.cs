@@ -5,8 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using TechTestBackend.Configuration;
 using TechTestBackend.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using TechTestBackend.Models;
@@ -20,18 +18,13 @@ namespace TechTestBackend.Tests
     [TestClass]
     public class UnitTests
     {
-        private readonly ISpotifyHttpService _spotify_http_service;
         private readonly SpotifyController _spotify_controller;
-        private ILogger<SpotifyHttpService> _http_service_logger;
         private ILogger<SpotifyController> _controller_logger;
-        private IOptions<SpotifyConfiguration> _options;
         private SongstorageContext _storage_context;
 
         public UnitTests()
         {
             InitateServicesForTests();
-
-            _spotify_http_service = new SpotifyHttpService(_options, _http_service_logger);
 
             _spotify_controller = new SpotifyController(_controller_logger, new SpotifyHttpMockService(), _storage_context);
         }
@@ -49,10 +42,6 @@ namespace TechTestBackend.Tests
                 .AddInMemoryCollection(in_memory_settings)
                 .Build();
 
-            var spotify_config = new SpotifyConfiguration();
-            final_configuration.GetSection("Spotify").Bind(spotify_config);
-            _options = Options.Create(spotify_config);
-
             var services = new ServiceCollection();
 
             services.AddDbContextFactory<SongstorageContext>(options =>
@@ -67,29 +56,7 @@ namespace TechTestBackend.Tests
 
             var factory = service_provider.GetService<ILoggerFactory>();
 
-            _http_service_logger = factory.CreateLogger<SpotifyHttpService>();
             _controller_logger = factory.CreateLogger<SpotifyController>();
-        }
-
-        [TestMethod]
-        public void TestTrackNotFound()
-        {
-            var song = _spotify_http_service.GetTrack("5eJ314ozT4CTPlyjdsG777");
-            Assert.IsTrue(song.Id == null);
-        }
-
-        [TestMethod]
-        public void TestTrackFound()
-        {
-            var song = _spotify_http_service.GetTrack("6jvqpOz4CrGUIk7d5iaI7i");//might fail if track is removed
-            Assert.IsTrue(song != null);
-        }
-
-        [TestMethod]
-        public void TestTracksFound()
-        {
-            var songs = _spotify_http_service.GetTracks("kent");//might fail if tracks with name is removed
-            Assert.IsTrue(songs != null && songs.Count() > 0);
         }
 
         [TestMethod]

@@ -15,16 +15,16 @@ namespace TechTestBackend.Services
         private TokenModel _token;
         private string _base_url;
 
-        public SpotifyHttpService(IOptions<SpotifyConfiguration> options, ILogger<SpotifyHttpService> logger)
+        public SpotifyHttpService(IOptions<SpotifyConfiguration> options, ILogger<SpotifyHttpService> logger, HttpClient http_client)
         {
-            _http_client = new HttpClient();
+            _http_client = http_client;
             _configuration = options.Value;
             _logger = logger;
 
             _base_url = _configuration.BaseUrl;
         }
 
-        private void GetAuthorizationHeader()
+        private void CreateOrRenewTokenIfNeeded()
         {
             if (_token == null || !_token.IsValid)
             {
@@ -51,7 +51,7 @@ namespace TechTestBackend.Services
 
         public Spotifysong[] GetTracks(string name)
         {
-            GetAuthorizationHeader();
+            CreateOrRenewTokenIfNeeded();
 
             var request_url = _base_url + "search?q=" + name + "&type=track";
             var response = _http_client.GetAsync(request_url).Result;
@@ -65,17 +65,15 @@ namespace TechTestBackend.Services
                 }
             }
             var content = response.Content.ReadAsStringAsync().Result;
-            dynamic objects = JsonConvert.DeserializeObject(content);
-
-            var spotify_song_items = objects.tracks.items.ToString();
-            var songs = JsonConvert.DeserializeObject<Spotifysong[]>(spotify_song_items);
+            var objects = JsonConvert.DeserializeObject<SpotifyTracksResponseModel>(content);
+            var songs = objects.Tracks.Items;
 
             return songs;
         }
 
         public Spotifysong GetTrack(string id)
         {
-            GetAuthorizationHeader();
+            CreateOrRenewTokenIfNeeded();
 
             var request_url = _base_url + "tracks/" + id + "/";
             var response = _http_client.GetAsync(request_url).Result;
@@ -87,9 +85,9 @@ namespace TechTestBackend.Services
                     return new Spotifysong();
                 }
             }
-            dynamic objects = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
+            var objects = response.Content.ReadAsStringAsync().Result;
 
-            var song = JsonConvert.DeserializeObject<Spotifysong>(objects.ToString());
+            var song = JsonConvert.DeserializeObject<Spotifysong>(objects);
 
             return song;
         }

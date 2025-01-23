@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using TechTestBackend.Models;
-using TechTestBackend.Helpers;
 using TechTestBackend.Services;
 
 namespace TechTestBackend.Controllers;
@@ -17,7 +16,6 @@ public class SpotifyController : ControllerBase
     {
         _logger = logger;
         _spotify_service = spotify_service;
-        SpotifyHelper.SpotifyService = _spotify_service;
         _storage = storage;
     }
 
@@ -27,7 +25,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            object track = SpotifyHelper.GetTracks(name);
+            object track = _spotify_service.GetTracks(name);
 
             _logger.LogDebug($"Successfully got track: {track}");
             return Ok(track);
@@ -46,7 +44,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            var track = SpotifyHelper.GetTrack(id); //check if track exists
+            var track = _spotify_service.GetTrack(id); //check if track exists
             if (track.Id == null || SpotifyId(id) == false)
             {
                 _logger.LogWarning("Track does not exist");
@@ -88,7 +86,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            var track = SpotifyHelper.GetTrack(id);
+            var track = _spotify_service.GetTrack(id);
             if (track.Id == null || SpotifyId(id) == false)
             {
                 _logger.LogWarning("Track does not exist");
@@ -135,7 +133,7 @@ public class SpotifyController : ControllerBase
                     var song = _storage.Songs.ToList()[i];
                     string songid = song.Id;
 
-                    var track = SpotifyHelper.GetTrack(songid);
+                    var track = _spotify_service.GetTrack(songid);
                     if (track.Id == null)
                     {
                         if (SongExists(songid))
