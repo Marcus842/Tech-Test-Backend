@@ -9,13 +9,13 @@ namespace TechTestBackend.Controllers;
 public class SpotifyController : ControllerBase
 {
     private readonly ILogger<SpotifyController> _logger;
-    private readonly ISpotifyHttpService _spotify_service;
+    private readonly ISpotifyHttpService _spotifyService;
     private readonly SongstorageContext _storage;
 
-    public SpotifyController(ILogger<SpotifyController> logger, ISpotifyHttpService spotify_service, SongstorageContext storage)
+    public SpotifyController(ILogger<SpotifyController> logger, ISpotifyHttpService spotifyService, SongstorageContext storage)
     {
         _logger = logger;
-        _spotify_service = spotify_service;
+        _spotifyService = spotifyService;
         _storage = storage;
     }
 
@@ -25,7 +25,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            object track = _spotify_service.GetTracks(name);
+            var track = _spotifyService.GetTracks(name);
 
             _logger.LogDebug($"Successfully got track: {track}");
             return Ok(track);
@@ -44,7 +44,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            var track = _spotify_service.GetTrack(id); //check if track exists
+            var track = _spotifyService.GetTrack(id); //check if track exists
             if (track.Id == null || SpotifyId(id) == false)
             {
                 _logger.LogWarning("Track does not exist");
@@ -86,7 +86,7 @@ public class SpotifyController : ControllerBase
     {
         try
         {
-            var track = _spotify_service.GetTrack(id);
+            var track = _spotifyService.GetTrack(id);
             if (track.Id == null || SpotifyId(id) == false)
             {
                 _logger.LogWarning("Track does not exist");
@@ -133,7 +133,7 @@ public class SpotifyController : ControllerBase
                     var song = _storage.Songs.ToList()[i];
                     string songid = song.Id;
 
-                    var track = _spotify_service.GetTrack(songid);
+                    var track = _spotifyService.GetTrack(songid);
                     if (track.Id == null)
                     {
                         if (SongExists(songid))

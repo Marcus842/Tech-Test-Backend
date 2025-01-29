@@ -18,28 +18,28 @@ namespace TechTestBackend.Tests
     [TestClass]
     public class UnitTests
     {
-        private readonly SpotifyController _spotify_controller;
-        private ILogger<SpotifyController> _controller_logger;
-        private SongstorageContext _storage_context;
+        private readonly SpotifyController _spotifyController;
+        private ILogger<SpotifyController> _spotifyControllerLogger;
+        private SongstorageContext _songStorageContext;
 
         public UnitTests()
         {
             InitateServicesForTests();
 
-            _spotify_controller = new SpotifyController(_controller_logger, new SpotifyHttpMockService(), _storage_context);
+            _spotifyController = new SpotifyController(_spotifyControllerLogger, new SpotifyHttpMockService(), _songStorageContext);
         }
 
         private void InitateServicesForTests()
         {
-            var base_configuration = new ConfigurationBuilder()
+            var baseConfiguration = new ConfigurationBuilder()
                                         .AddUserSecrets<SpotifyHttpService>()
                                         .Build();
 
-            var in_memory_settings = new Dictionary<string, string>{{ "Spotify:BaseUrl", "https://api.spotify.com/v1/" }};
+            var inMemorySettings = new Dictionary<string, string>{{ "Spotify:BaseUrl", "https://api.spotify.com/v1/" }};
 
-            var final_configuration = new ConfigurationBuilder()
-                .AddConfiguration(base_configuration)
-                .AddInMemoryCollection(in_memory_settings)
+            var finalConfiguration = new ConfigurationBuilder()
+                .AddConfiguration(baseConfiguration)
+                .AddInMemoryCollection(inMemorySettings)
                 .Build();
 
             var services = new ServiceCollection();
@@ -48,15 +48,15 @@ namespace TechTestBackend.Tests
                 options.UseInMemoryDatabase("Songstorage"));
 
             services.AddLogging();
-            var service_provider = services.BuildServiceProvider();
+            var serviceProvider = services.BuildServiceProvider();
 
-            var db_context_factory = service_provider.GetRequiredService<IDbContextFactory<SongstorageContext>>();
+            var storage = serviceProvider.GetRequiredService<IDbContextFactory<SongstorageContext>>();
 
-            _storage_context = db_context_factory.CreateDbContext();
+            _songStorageContext = storage.CreateDbContext();
 
-            var factory = service_provider.GetService<ILoggerFactory>();
+            var factory = serviceProvider.GetService<ILoggerFactory>();
 
-            _controller_logger = factory.CreateLogger<SpotifyController>();
+            _spotifyControllerLogger = factory.CreateLogger<SpotifyController>();
         }
 
         [TestMethod]
@@ -64,11 +64,11 @@ namespace TechTestBackend.Tests
         {
             var dummydata = new DummyData();
 
-            var action_result = _spotify_controller.SearchTracks("kent");
-            var ok_result = action_result as OkObjectResult;
-            Assert.IsNotNull(ok_result);
+            var actionResult = _spotifyController.SearchTracks("kent");
+            var okResult = actionResult as OkObjectResult;
+            Assert.IsNotNull(okResult);
 
-            var songs = ok_result.Value as Spotifysong[];
+            var songs = okResult.Value as Spotifysong[];
             Assert.IsNotNull(songs);
 
             Assert.IsTrue(dummydata.ListsAreEqual(songs));
@@ -86,27 +86,27 @@ namespace TechTestBackend.Tests
             var song = songs[0];
             var dummydata = new DummyData();
 
-            var songs_from_dummydata = dummydata.GetSongs();
-            var song_to_compare_with = songs_from_dummydata[1];
-            Assert.IsTrue(song.Id == song_to_compare_with.Id && song.Name == song_to_compare_with.Name);
+            var dummyDataSongs = dummydata.GetSongs();
+            var expectedSong = dummyDataSongs[1];
+            Assert.IsTrue(song.Id == expectedSong.Id && song.Name == expectedSong.Name);
         }
 
         [TestMethod]
         public void RemoveLikedSongThatDoesNotExistInSpotify()
         {
-            var action_result = _spotify_controller.RemoveLike("5YCKObb1A7YIeOKzXhREwz");
-            var statuscode_result = action_result as StatusCodeResult;
-            Assert.IsNotNull(statuscode_result);
+            var actionResult = _spotifyController.RemoveLike("5YCKObb1A7YIeOKzXhREwz");
+            var statusCodeResult = actionResult as StatusCodeResult;
+            Assert.IsNotNull(statusCodeResult);
 
-            Assert.IsTrue(statuscode_result.StatusCode == 400);
+            Assert.IsTrue(statusCodeResult.StatusCode == 400);
         }
 
         [TestMethod]
         public void RemoveLikedAndListSongs()
         {
-            var action_result = _spotify_controller.RemoveLike("5eJ314ozT4CTPlyjdsGq78");
-            var ok_result = action_result as OkResult;
-            Assert.IsNotNull(ok_result);
+            var actionResult = _spotifyController.RemoveLike("5eJ314ozT4CTPlyjdsGq78");
+            var okResult = actionResult as OkResult;
+            Assert.IsNotNull(okResult);
 
             var songs = ListLikedSongs();
 
@@ -115,27 +115,27 @@ namespace TechTestBackend.Tests
 
         private void LikeSongThatDoesNotExist()
         {
-            var action_result = _spotify_controller.Like("5YCKObb1A7YIeOKzXhREwz");
-            var statuscode_result = action_result as StatusCodeResult;
-            Assert.IsNotNull(statuscode_result);
+            var actionResult = _spotifyController.Like("5YCKObb1A7YIeOKzXhREwz");
+            var statusCodeResult = actionResult as StatusCodeResult;
+            Assert.IsNotNull(statusCodeResult);
 
-            Assert.IsTrue(statuscode_result.StatusCode == 400);
+            Assert.IsTrue(statusCodeResult.StatusCode == 400);
         }
 
         private void LikeSongThatExist()
         {
-            var action_result = _spotify_controller.Like("5eJ314ozT4CTPlyjdsGq78");
-            var ok_result = action_result as OkResult;
-            Assert.IsNotNull(ok_result);
+            var actionResult = _spotifyController.Like("5eJ314ozT4CTPlyjdsGq78");
+            var okResult = actionResult as OkResult;
+            Assert.IsNotNull(okResult);
         }
 
         private List<Spotifysong> ListLikedSongs()
         {
-            var action_result = _spotify_controller.ListLiked();
-            var ok_result = action_result as OkObjectResult;
-            Assert.IsNotNull(ok_result);
+            var actionResult = _spotifyController.ListLiked();
+            var okResult = actionResult as OkObjectResult;
+            Assert.IsNotNull(okResult);
 
-            var songs = ok_result.Value as List<Spotifysong>;
+            var songs = okResult.Value as List<Spotifysong>;
             Assert.IsNotNull(songs);
 
             return songs;
